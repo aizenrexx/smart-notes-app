@@ -1,110 +1,141 @@
-# Smart Notes App
+<div align="center">
 
-A full-stack Smart Notes application built with React + Vite, Express, and the Insforge backend.
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/banner-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner.svg">
+  <img src="docs/assets/banner.svg" alt="Smart Notes - a full-stack notes app" width="100%">
+</picture>
+
+<br>
+
+**Write it down. Find it later. Never press save.**
+
+A full-stack notes app built as a pnpm monorepo - a React + Vite front end over a shared Express backend, with the API contract generated from an OpenAPI spec so the two can never drift apart.
+
+<br>
+
+![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646cff?style=flat-square&logo=vite&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-3f7a5c?style=flat-square)
+
+<br>
+
+[**Features**](#features) &nbsp;&nbsp;|&nbsp;&nbsp; [**Architecture**](#architecture) &nbsp;&nbsp;|&nbsp;&nbsp; [**Running it**](#running-it) &nbsp;&nbsp;|&nbsp;&nbsp; [**API**](#api)
+
+</div>
+
+---
+
+## What it is
+
+This repository is the **original build** of Smart Notes: a landing page plus a working notes workspace, backed by an Express server and persisted to Insforge.
+
+It is deliberately smaller than its sibling, [smart-ins-note](https://github.com/aizenrexx/smart-ins-note). That one grew a Next.js three-panel workspace, a rich-text editor and an AI assistant. This one is the foundation - the monorepo shape, the generated API client, and the CRUD flow that everything else was built on top of.
+
+> If you only want to run one of them, run **smart-ins-note**. This repo is kept because the architecture here is the simpler thing to read when you want to understand how the pieces fit.
+
+<div align="center">
+
+|  |  |
+|:---|:---|
+| **Front end** | React 19 + Vite, TailwindCSS |
+| **Backend** | Express 5 - every data call goes through it |
+| **Persistence** | Insforge (cloud Postgres-compatible BaaS) |
+| **Validation** | Zod, OpenAPI-generated schemas |
+| **Monorepo** | pnpm workspaces, Node 24, TypeScript 5.8 |
+
+</div>
+
+---
 
 ## Features
 
-- **Landing Page** — Hero section, features grid, how-it-works steps, CTA, and footer
-- **Notes Workspace** — Create, view, and delete notes with real-time updates
-- **Insforge Backend** — Notes are stored and managed via the Insforge API
-- **Modern UI** — Indigo/slate palette, responsive design, smooth animations
-- **Clean Architecture** — Monorepo with shared types, OpenAPI spec, and generated hooks
+- **Landing page** - hero, features, how-it-works, call to action
+- **Notes workspace** - create, read, update and delete notes with real-time updates
+- **Starred, archived and trashed** states rather than a flat list
+- **Tags** with colour, created and deleted from the UI
+- **Search** across titles and content
+- **Dark and light mode**
+- **OpenAPI-driven API client** - change the spec, regenerate, and the hooks and validators follow
 
-## Tech Stack
+---
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite, Tailwind CSS |
-| Routing | Wouter |
-| API Hooks | Orval (generated from OpenAPI) |
-| Backend | Express 5 (Node.js) |
-| API Spec | OpenAPI 3.1 |
-| Data Source | Insforge API |
-| Package Manager | pnpm (workspace monorepo) |
-
-## Project Structure
+## Architecture
 
 ```
-├── artifacts/
-│   ├── api-server/          # Express backend
-│   │   └── src/routes/
-│   │       ├── health.ts    # Health check
-│   │       └── notes.ts     # Notes CRUD (proxies to Insforge)
-│   └── smart-notes/         # React + Vite frontend
-│       └── src/
-│           ├── pages/       # Landing, Notes, NotFound
-│           ├── components/  # Layout + Notes components
-│           └── index.css    # Theme (indigo/slate palette)
-├── lib/
-│   ├── api-spec/            # OpenAPI YAML spec
-│   ├── api-client-react/    # Generated React Query hooks
-│   └── api-zod/             # Generated Zod schemas
-└── README.md
+artifacts/
+  smart-notes/         React 19 + Vite front end   (/)
+  api-server/          Express 5                   (/api)
+  mockup-sandbox/      Vite component preview      (/__mockup)
+lib/
+  api-spec/            OpenAPI spec (source of truth)
+  api-zod/             Generated Zod schemas
+  api-client-react/    Generated React Query hooks
 ```
 
-## Getting Started
+The browser never talks to the database. Every request goes through Express, which keeps the backend credentials on the server where they belong.
 
-### Prerequisites
+---
 
-- Node.js 20+
-- pnpm 9+
-
-### Environment Variables
-
-Set the following environment variables (or secrets):
-
-```
-INSFORGE_API_KEY=your_insforge_api_key
-INSFORGE_API_BASE_URL=https://your-insforge-instance.insforge.app
-```
-
-### Install dependencies
+## Running it
 
 ```bash
+# install
 pnpm install
-```
 
-### Run in development
-
-The app uses Replit workflows. Two services run:
-
-- **API Server** — `pnpm --filter @workspace/api-server run dev`
-- **Frontend** — `pnpm --filter @workspace/smart-notes run dev`
-
-### Regenerate API types
-
-After editing `lib/api-spec/openapi.yaml`:
-
-```bash
+# regenerate hooks and validators from the OpenAPI spec
 pnpm --filter @workspace/api-spec run codegen
+
+# API server
+pnpm --filter @workspace/api-server run dev
+
+# front end
+pnpm --filter @workspace/smart-notes run dev
+
+# typecheck everything
+pnpm run typecheck
 ```
 
-## API Endpoints
+### Environment
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/healthz` | Health check |
-| GET | `/api/notes` | Fetch all notes |
-| POST | `/api/notes` | Create a note |
-| DELETE | `/api/notes/:id` | Delete a note |
+| Variable | Purpose |
+|:---|:---|
+| `INSFORGE_API_BASE_URL` | Insforge project base URL |
+| `INSFORGE_API_KEY` | Insforge API key - server-side only |
+| `INSFORGE_ANON_KEY` | Insforge anon JWT |
+| `SESSION_SECRET` | Session secret |
 
-## Notes Data Model
+> Keep these in `.env` (git-ignored). Never commit a real key.
 
-```typescript
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-```
+---
 
-## Pages
+## API
 
-- `/` — Landing page with product overview
-- `/notes` — Notes workspace (create, view, delete)
+| Method | Path | Purpose |
+|:---|:---|:---|
+| `GET` | `/api/healthz` | Health check |
+| `GET` | `/api/notes` | List notes, newest first |
+| `POST` | `/api/notes` | Create `{ title, content }` |
+| `PATCH` | `/api/notes/:id` | Update `{ title?, content?, starred?, archived?, trashed? }` |
+| `DELETE` | `/api/notes/:id` | Delete a note |
+| `GET` `POST` | `/api/tags` | List / create tags |
+| `DELETE` | `/api/tags/:id` | Delete a tag |
 
-## License
+---
 
-MIT
+## Data model
+
+| Table | Columns |
+|:---|:---|
+| `notes` | id, title, content, starred, archived, trashed, created_at, updated_at |
+| `tags` | id, name, color, created_at, updated_at |
+
+---
+
+## Licence
+
+MIT - see [LICENSE](LICENSE).
+
+Built by **Aizenrex x Riyad**.
